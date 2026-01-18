@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Generator - QS4QS</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Plus, Trash2, Printer } = lucide;
+
+        function InvoiceGenerator() {
+          const [invoices, setInvoices] = useState([]);
+          const [currentInvoice, setCurrentInvoice] = useState({
+            invoiceNumber: '',
+            invoiceDate: new Date().toISOString().split('T')[0],
+            dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+            companyName: 'M4N MARKETING MANAGEMENT L.L.C',
+            companyAddress: 'ONTARIO TOWER U.A.E',
+            companyEmail: 'munas@qs4qs.com',
+            companyPhone: '+971585892013',
+            billingName: 'Globe Building Contracting',
+            bankName: 'WIO Bank',
+            iban: 'AE100860000009557941741',
+            swiftCode: 'WIOBAEADXXX',
+            bankAddress: 'Level 5, Etihad Airways Centre, Abu Dhabi, Post Box: 112437',
+            items: [{ description: '', quantity: 1, rate: 0 }],
+            paymentMade: 0
+          });
+
+          useEffect(() => {
+            const nextNumber = (invoices.length + 1).toString().padStart(2, '0');
+            setCurrentInvoice(prev => ({
+              ...prev,
+              invoiceNumber: `INVQS4QS_26_${nextNumber}`
+            }));
+          }, [invoices.length]);
+
+          const addItem = () => {
+            setCurrentInvoice(prev => ({
+              ...prev,
+              items: [...prev.items, { description: '', quantity: 1, rate: 0 }]
+            }));
+          };
+
+          const removeItem = (index) => {
+            setCurrentInvoice(prev => ({
+              ...prev,
+              items: prev.items.filter((_, i) => i !== index)
+            }));
+          };
+
+          const updateItem = (index, field, value) => {
+            setCurrentInvoice(prev => ({
+              ...prev,
+              items: prev.items.map((item, i) => 
+                i === index ? { ...item, [field]: value } : item
+              )
+            }));
+          };
+
+          const calculateSubTotal = () => {
+            return currentInvoice.items.reduce((sum, item) => 
+              sum + (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0), 0
+            );
+          };
+
+          const calculateBalance = () => {
+            return calculateSubTotal() - (parseFloat(currentInvoice.paymentMade) || 0);
+          };
+
+          const saveInvoice = () => {
+            setInvoices(prev => [...prev, { ...currentInvoice, id: Date.now() }]);
+            const nextNumber = (invoices.length + 2).toString().padStart(2, '0');
+            setCurrentInvoice({
+              ...currentInvoice,
+              invoiceNumber: `INVQS4QS_26_${nextNumber}`,
+              items: [{ description: '', quantity: 1, rate: 0 }],
+              paymentMade: 0
+            });
+          };
+
+          const printInvoice = () => {
+            window.print();
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Form Section */}
+                  <div className="bg-white rounded-lg shadow-lg p-6 print:hidden">
+                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Create Invoice</h2>
+                    
+                    {/* Invoice Details */}
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Invoice Number</label>
+                        <input
+                          type="text"
+                          value={currentInvoice.invoiceNumber}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-100"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Invoice Date</label>
+                          <input
+                            type="date"
+                            value={currentInvoice.invoiceDate}
+                            onChange={(e) => setCurrentInvoice({...currentInvoice, invoiceDate: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Due Date</label>
+                          <input
+                            type="date"
+                            value={currentInvoice.dueDate}
+                            onChange={(e) => setCurrentInvoice({...currentInvoice, dueDate: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Company Details */}
+                    <div className="space-y-4 mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800">Company Details</h3>
+                      <input
+                        type="text"
+                        placeholder="Company Name"
+                        value={currentInvoice.companyName}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, companyName: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Company Address"
+                        value={currentInvoice.companyAddress}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, companyAddress: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={currentInvoice.companyEmail}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, companyEmail: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Phone"
+                        value={currentInvoice.companyPhone}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, companyPhone: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                    </div>
+
+                    {/* Billing Information */}
+                    <div className="space-y-4 mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800">Billing Information</h3>
+                      <input
+                        type="text"
+                        placeholder="Billing Name"
+                        value={currentInvoice.billingName}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, billingName: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                    </div>
+
+                    {/* Payment Information */}
+                    <div className="space-y-4 mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800">Payment Information</h3>
+                      <input
+                        type="text"
+                        placeholder="Bank Name"
+                        value={currentInvoice.bankName}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, bankName: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="IBAN"
+                        value={currentInvoice.iban}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, iban: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="SWIFT/BIC Code"
+                        value={currentInvoice.swiftCode}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, swiftCode: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Bank Address"
+                        value={currentInvoice.bankAddress}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, bankAddress: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                      />
+                    </div>
+
+                    {/* Items */}
+                    <div className="space-y-4 mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800">Items</h3>
+                      {currentInvoice.items.map((item, index) => (
+                        <div key={index} className="border border-gray-200 rounded p-4 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-gray-700">Item {index + 1}</span>
+                            {currentInvoice.items.length > 1 && (
+                              <button
+                                onClick={() => removeItem(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            )}
+                          </div>
+                          <textarea
+                            placeholder="Item Description"
+                            value={item.description}
+                            onChange={(e) => updateItem(index, 'description', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded"
+                            rows="2"
+                          />
+                          <div className="grid grid-cols-2 gap-3">
+                            <input
+                              type="number"
+                              placeholder="Quantity"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded"
+                              min="0"
+                              step="0.01"
+                            />
+                            <input
+                              type="number"
+                              placeholder="Rate"
+                              value={item.rate}
+                              onChange={(e) => updateItem(index, 'rate', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                          <div className="text-right font-semibold text-gray-800">
+                            Amount: AED {((item.quantity || 0) * (item.rate || 0)).toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        onClick={addItem}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        <Plus size={18} /> Add Item
+                      </button>
+                    </div>
+
+                    {/* Payment Made */}
+                    <div className="space-y-4 mb-6">
+                      <label className="block text-sm font-semibold text-gray-700">Payment Made</label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={currentInvoice.paymentMade}
+                        onChange={(e) => setCurrentInvoice({...currentInvoice, paymentMade: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={saveInvoice}
+                        className="flex-1 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-semibold"
+                      >
+                        Save Invoice
+                      </button>
+                      <button
+                        onClick={printInvoice}
+                        className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800"
+                      >
+                        <Printer size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Preview Section */}
+                  <div className="bg-white rounded-lg shadow-lg print:shadow-none print:rounded-none">
+                    <div id="invoice-preview" className="p-8">
+                      <div className="border-b-2 border-gray-300 pb-4 mb-6">
+                        <h1 className="text-3xl font-bold text-gray-800">TAX INVOICE</h1>
+                        <p className="text-xl font-semibold text-gray-600 mt-2">{currentInvoice.invoiceNumber}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <p className="text-sm text-gray-600 font-semibold">Invoice Date</p>
+                          <p className="text-lg font-bold text-gray-800">
+                            {new Date(currentInvoice.invoiceDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 font-semibold">Due Date</p>
+                          <p className="text-lg font-bold text-gray-800">
+                            {new Date(currentInvoice.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 mb-8">
+                        <div>
+                          <p className="text-sm font-bold text-gray-700 mb-2">COMPANY DETAILS</p>
+                          <p className="font-bold text-gray-800">{currentInvoice.companyName}</p>
+                          <p className="text-gray-600 text-sm">{currentInvoice.companyAddress}</p>
+                          <p className="text-gray-600 text-sm">{currentInvoice.companyEmail}</p>
+                          <p className="text-gray-600 text-sm">{currentInvoice.companyPhone}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-700 mb-2">BILLING INFORMATION</p>
+                          <p className="font-bold text-gray-800">{currentInvoice.billingName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-700 mb-2">PAYMENT INFORMATION</p>
+                          <p className="text-xs text-gray-600">BANK NAME</p>
+                          <p className="font-bold text-gray-800 text-sm mb-2">{currentInvoice.bankName}</p>
+                          <p className="text-xs text-gray-600">BENEFICIARY IBAN</p>
+                          <p className="font-bold text-gray-800 text-sm mb-2">{currentInvoice.iban}</p>
+                          <p className="text-xs text-gray-600">SWIFT / BIC CODE</p>
+                          <p className="font-bold text-gray-800 text-sm mb-2">{currentInvoice.swiftCode}</p>
+                          <p className="text-xs text-gray-600">BANK ADDRESS</p>
+                          <p className="text-gray-800 text-xs">{currentInvoice.bankAddress}</p>
+                        </div>
+                      </div>
+
+                      <table className="w-full mb-6">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="text-left py-2 px-3 text-sm font-bold text-gray-700">Item & Description</th>
+                            <th className="text-right py-2 px-3 text-sm font-bold text-gray-700">Quantity</th>
+                            <th className="text-right py-2 px-3 text-sm font-bold text-gray-700">Rate</th>
+                            <th className="text-right py-2 px-3 text-sm font-bold text-gray-700">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentInvoice.items.map((item, index) => (
+                            <tr key={index} className="border-b border-gray-200">
+                              <td className="py-3 px-3 text-sm text-gray-800">{item.description}</td>
+                              <td className="text-right py-3 px-3 text-sm text-gray-800">{parseFloat(item.quantity || 0).toFixed(2)} Hrs</td>
+                              <td className="text-right py-3 px-3 text-sm text-gray-800">{parseFloat(item.rate || 0).toFixed(2)}</td>
+                              <td className="text-right py-3 px-3 text-sm text-gray-800">{((item.quantity || 0) * (item.rate || 0)).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <div className="flex justify-end mb-8">
+                        <div className="w-64">
+                          <div className="flex justify-between py-2 border-b border-gray-200">
+                            <span className="text-sm text-gray-700">Sub Total</span>
+                            <span className="text-sm font-bold text-gray-800">{calculateSubTotal().toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between py-2 border-b-2 border-gray-300">
+                            <span className="font-bold text-gray-700">Total (AED)</span>
+                            <span className="font-bold text-xl text-gray-800">{calculateSubTotal().toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between py-2 border-b border-gray-200">
+                            <span className="text-sm text-gray-700">Payment Made (-)</span>
+                            <span className="text-sm text-gray-800">{parseFloat(currentInvoice.paymentMade || 0).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between py-2">
+                            <span className="font-bold text-gray-700">Balance Due</span>
+                            <span className="font-bold text-lg text-gray-800">AED {calculateBalance().toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Saved Invoices */}
+                {invoices.length > 0 && (
+                  <div className="mt-8 bg-white rounded-lg shadow-lg p-6 print:hidden">
+                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Saved Invoices ({invoices.length})</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {invoices.map((invoice) => (
+                        <div key={invoice.id} className="border border-gray-200 rounded p-4 hover:shadow-md transition">
+                          <p className="font-bold text-gray-800">{invoice.invoiceNumber}</p>
+                          <p className="text-sm text-gray-600">{invoice.billingName}</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}
+                          </p>
+                          <p className="text-lg font-bold text-gray-800 mt-2">
+                            AED {invoice.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0).toFixed(2)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <style>{`
+                @media print {
+                  body * {
+                    visibility: hidden;
+                  }
+                  #invoice-preview, #invoice-preview * {
+                    visibility: visible;
+                  }
+                  #invoice-preview {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                  }
+                }
+              `}</style>
+            </div>
+          );
+        }
+
+        ReactDOM.render(<InvoiceGenerator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
